@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MLOPS-Project"
+version = "0.1.0"
+authors = [{name = "Tu Nombre", email = "tu@correo.com"}]
+description = "Proyecto de predicción de costos en cadena de suministro"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

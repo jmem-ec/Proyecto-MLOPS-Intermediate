@@ -6,4 +6,5 @@ dependencies:
   - cookiecutter
   - pandas
   - scikit-learn
+  - requests
 prefix: /home/jmem_2025/miniconda3/envs/mlops-core
