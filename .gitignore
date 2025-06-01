@@ -77,9 +77,12 @@ target/
 
 # exclude data from source control by default
 /data/
-/outputs/
-/models/
-/reports/
+/outputs/*
+!/outputs/.gitkeep
+/models/*
+!/models/.gitkeep
+/reports/*
+!/reports/.gitkeep
 
 # Mac OS-specific storage files
 .DS_Store
