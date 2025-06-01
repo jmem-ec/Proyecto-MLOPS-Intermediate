@@ -1,0 +1,7 @@
+model_data:
+  train_data_dir: data/processed
+  train_filename: Train_Dataset.csv
+  test_data_dir: data/processed
+  test_filename: Test_Dataset.csv
+  target_data: line_item_value
+  models_dir: models

@@ -3,6 +3,10 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import os
+
+import hydra
+from omegaconf import DictConfig
 
 from app_logging import logging
 from app_exception.exception import AppException
@@ -22,10 +26,10 @@ class FeatureEngineering:
         self.get_data = GetData()
         self.load_data = LoadData()
         
-    def data_(self, input_path):
+    def data_(self, config):
         try:
             logging.info("'data_' FUNCTION STARTED")
-            self.data = input_path 
+            self.data = config.cleaned_data.cleaned_data_dir + "/" + config.cleaned_data.cleaned_filename
             self.data = pd.read_csv(self.data)
             logging.info("Data loaded successfully")
             return self.data
@@ -44,10 +48,10 @@ class FeatureEngineering:
         return self.data
     
     
-    def remove_outliers(self, input_path):
+    def remove_outliers(self, config):
         try:
             logging.info( "'remove_outliers' FUNCTION STARTED")
-            self.data = self.data_(input_path)
+            self.data = self.data_(config)
             self.data0 = self.outlier_detection(self.data, "line_item_value")
             self.data1 = self.outlier_detection(
                 self.data0, "unit_of_measure_(per_pack)")
@@ -74,11 +78,11 @@ class FeatureEngineering:
             else:
                 return x
 
-    def freight_cost_transform(self, input_path):
+    def freight_cost_transform(self, config):
         try:
             logging.info(
                  "'freight_cost_transform' FUNCTION STARTED")
-            self.data = self.remove_outliers(input_path)
+            self.data = self.remove_outliers(config)
             
             self.data = self.data.copy()
             self.data["freight_cost_(usd)"] = self.data["freight_cost_(usd)"].apply(self.trans_freight_cost)
@@ -104,12 +108,12 @@ class FeatureEngineering:
             raise AppException(e, sys) from e
 
 
-    def feature_engineering(self, input_path):
+    def feature_engineering(self, config):
         try:
             logging.info( "'feature_engineering' FUNCTION STARTED")
             lb=LabelEncoder()
             lb=LabelEncoder()
-            self.data = self.freight_cost_transform(input_path)
+            self.data = self.freight_cost_transform(config)
             self.data.drop("pq_#",axis=1,inplace=True)
             self.data["po_/_so_#"]=pd.get_dummies(self.data["po_/_so_#"],drop_first=True,dtype=int)
             self.data["asn/dn_#"]=pd.get_dummies(self.data["asn/dn_#"],drop_first=True,dtype=int)
@@ -136,13 +140,13 @@ class FeatureEngineering:
                  "Failed to execute the code please check your code and run")
             raise AppException(e, sys) from e
 
-    def final_data(self,input_path, output_path):
+    def final_data(self, config): #input_path, output_path):
         try:
             
             logging.info( "'data' FUNCTION STARTED")
-            self.finaldata = self.feature_engineering(input_path)
+            self.finaldata = self.feature_engineering(config)
             self.data.drop("Unnamed: 0", axis=1, inplace=True)
-            self.data.to_csv(output_path, index=False)
+            self.data.to_csv(config.processed_data.processed_data_dir + "/" + config.processed_data.processed_filename, index=False)
             logging.info( "Final Data for prediction successfully created")
         except Exception as e:
             logging.info(
@@ -151,10 +155,20 @@ class FeatureEngineering:
                  "Failed to execute the code please check your code and run")
             raise AppException(e, sys) from e
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input_path', default='data/interim/datacleaned.csv')
-    parser.add_argument('--output_path', default='data/processed/dataprocesed.csv')
-    args = parser.parse_args()
 
-    data = FeatureEngineering().final_data(input_path=args.input_path, output_path=args.output_path)
+@hydra.main(config_path=f"{os.getcwd()}/configs", config_name="data_eng", version_base=None)
+def main(cfg: DictConfig):
+    logging.basicConfig(level=logging.INFO)
+    data = FeatureEngineering().final_data(cfg) # input_path=args.input_path, output_path=args.output_path)
+
+if __name__ == "__main__":
+    main()
+
+
+#if __name__ == "__main__":
+#    parser = argparse.ArgumentParser()
+#    parser.add_argument('--input_path', default='data/interim/datacleaned.csv')
+#    parser.add_argument('--output_path', default='data/processed/dataprocesed.csv')
+#    args = parser.parse_args()
+
+#    data = FeatureEngineering().final_data(input_path=args.input_path, output_path=args.output_path)

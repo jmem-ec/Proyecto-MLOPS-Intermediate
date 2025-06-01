@@ -1,0 +1,7 @@
+data_source:
+  url: https://raw.githubusercontent.com/jmem-ec/KRRCourse/ccbd6ccf8389ba0988d53fc9300a64da00e6368b/Consignment_pricing.csv
+  external_data_dir: data/external
+  filename: Consignment_pricing.csv
+raw_data:
+  raw_data_dir: data/raw
+  raw_filename: Dataset.csv

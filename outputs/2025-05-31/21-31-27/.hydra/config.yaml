@@ -1,0 +1,20 @@
+data_source:
+  url: https://raw.githubusercontent.com/jmem-ec/KRRCourse/ccbd6ccf8389ba0988d53fc9300a64da00e6368b/Consignment_pricing.csv
+  external_data_dir: data/external
+  filename: Consignment_pricing.csv
+raw_data:
+  raw_data_dir: data/raw
+  raw_filename: Dataset.csv
+cleaned_data:
+  cleaned_data_dir: data/interim
+  cleaned_filename: Cleaned_Dataset.csv
+processed_data:
+  processed_data_dir: data/processed
+  processed_filename: Processed_Dataset.csv
+splited_data:
+  train_data_dir: data/processed
+  train_filename: Train_Dataset.csv
+  test_data_dir: data/processed
+  test_filename: Test_Dataset.csv
+  split_ratio: 0.2
+  random_state: 180
