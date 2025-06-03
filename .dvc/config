@@ -1,3 +1,6 @@
+[core]
+    remote = gdrive-remote
 ['remote "gdrive-remote"']
-    url = gdrive://1xpPR2QWkuKziydzIlKXMUUdYxN2LOxpS
+    url = gdrive://1TZfPg4-5LHmroiS5ijxX9Yv6jhALqUhb
     gdrive_use_service_account = true
+    gdrive_service_account_json_file_path = /configs/credentials/testdvc-461620-797d15c1bd97.json

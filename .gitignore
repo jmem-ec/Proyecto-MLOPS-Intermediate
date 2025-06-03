@@ -75,14 +75,21 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
+
+#Credenciales
+testdvc-461620-797d15c1bd97.json
+
 # exclude data from source control by default
-/data/external/
+/data/
+!data/**/*.dvc
 /outputs/*
 !/outputs/.gitkeep
 /models/*
+!/models/**/*.dvc
 !/models/.gitkeep
 /reports/*
 !/reports/.gitkeep
+!/reports/**/*.dvc
 
 # Mac OS-specific storage files
 .DS_Store
