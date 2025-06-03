@@ -61,7 +61,7 @@ class Predict:
         logging.info("Predicition successfully")
         logging.info(output)
 
-@hydra.main(config_path=f"{os.getcwd()}/configs", config_name="model1", version_base=None)
+@hydra.main(config_path=f"{os.getcwd()}/configs", config_name="model_eng", version_base=None)
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
     Predict().predict(cfg)

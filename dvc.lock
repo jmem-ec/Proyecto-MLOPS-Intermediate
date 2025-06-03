@@ -1,0 +1,82 @@
+schema: '2.0'
+stages:
+  limpieza:
+    cmd: python3 src/data_eng/stage2_cleaning.py
+    deps:
+    - path: data/raw/Dataset.csv
+      hash: md5
+      md5: fa00f21b7e9c8ea082e583f595566888
+      size: 3794124
+    - path: src/data_eng/stage2_cleaning.py
+      hash: md5
+      md5: c5544a105b44f977be20868a341d3dca
+      size: 8959
+    outs:
+    - path: data/interim/Cleaned_Dataset.csv
+      hash: md5
+      md5: 765b09d99484cfb6e91ed4efbb9c82aa
+      size: 1228271
+  extraccion_caracteristicas:
+    cmd: python3 src/data_eng/stage3_labeling.py
+    deps:
+    - path: data/interim/Cleaned_Dataset.csv
+      hash: md5
+      md5: 765b09d99484cfb6e91ed4efbb9c82aa
+      size: 1228271
+    - path: src/data_eng/stage3_labeling.py
+      hash: md5
+      md5: a2290a11d9da1ddc479c7b1656ffd5d0
+      size: 7104
+    outs:
+    - path: data/processed/Processed_Dataset.csv
+      hash: md5
+      md5: 66344087d576c81f702cb2543701549c
+      size: 585410
+  division:
+    cmd: python3 src/data_eng/stage4_splitting.py
+    deps:
+    - path: data/processed/Processed_Dataset.csv
+      hash: md5
+      md5: 66344087d576c81f702cb2543701549c
+      size: 585410
+    - path: src/data_eng/stage4_splitting.py
+      hash: md5
+      md5: 08cf76046b5a42fe389fc6844d123226
+      size: 2170
+    outs:
+    - path: data/processed/Test_Dataset.csv
+      hash: md5
+      md5: 23143bcb05278b55bf259435ff9e36e9
+      size: 117442
+    - path: data/processed/Train_Dataset.csv
+      hash: md5
+      md5: 25c5c1523f034247933a130a9a9757c1
+      size: 468225
+  entrenamiento_evaluacion:
+    cmd: python3 src/model_eng/stage1_2_train_evaluate.py
+    deps:
+    - path: data/processed/Test_Dataset.csv
+      hash: md5
+      md5: 23143bcb05278b55bf259435ff9e36e9
+      size: 117442
+    - path: data/processed/Train_Dataset.csv
+      hash: md5
+      md5: 25c5c1523f034247933a130a9a9757c1
+      size: 468225
+    - path: src/model_eng/stage1_2_train_evaluate.py
+      hash: md5
+      md5: f37d3660a16fac809d53529f80bd9dc8
+      size: 6167
+    params:
+      configs/model_eng.yaml:
+        RandomizedSearchCV.cv: 5
+        RandomizedSearchCV.n_iter: 30
+    outs:
+    - path: models/model_rf.pkl
+      hash: md5
+      md5: 24283e82bde503ec1dd50cf3ed268ef1
+      size: 20577295
+    - path: reports/scores.json
+      hash: md5
+      md5: 040b9824c3c0ca49d96233e60c3ffb0a
+      size: 175

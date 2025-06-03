@@ -19,6 +19,7 @@ class Preprocessing:
     columns and so on
     class return and save csv data to a specified folder path
     '''
+
     def __init__(self):
         self.load_data = LoadData()
         self.get_data = GetData()

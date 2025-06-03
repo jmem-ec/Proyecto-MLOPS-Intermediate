@@ -1,0 +1,40 @@
+stages:
+  limpieza:
+    cmd: python3 src/data_eng/stage2_cleaning.py
+    deps:
+    - data/raw/Dataset.csv
+    - src/data_eng/stage2_cleaning.py
+    outs:
+    - data/interim/Cleaned_Dataset.csv
+
+  extraccion_caracteristicas:
+    cmd: python3 src/data_eng/stage3_labeling.py
+    deps:
+    - data/interim/Cleaned_Dataset.csv
+    - src/data_eng/stage3_labeling.py
+    outs:
+    - data/processed/Processed_Dataset.csv
+
+  division:
+    cmd: python3 src/data_eng/stage4_splitting.py
+    deps:
+    - data/processed/Processed_Dataset.csv
+    - src/data_eng/stage4_splitting.py
+    outs:
+    - data/processed/Train_Dataset.csv
+    - data/processed/Test_Dataset.csv
+
+  entrenamiento_evaluacion:
+    cmd: python3 src/model_eng/stage1_2_train_evaluate.py
+    deps:
+    - data/processed/Test_Dataset.csv
+    - data/processed/Train_Dataset.csv
+    - src/model_eng/stage1_2_train_evaluate.py
+    params:
+      - configs/model_eng.yaml:
+        - RandomizedSearchCV.cv
+        - RandomizedSearchCV.n_iter
+    outs:
+    - models/model_rf.pkl
+    metrics:
+    - reports/scores.json

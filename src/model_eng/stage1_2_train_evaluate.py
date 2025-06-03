@@ -21,16 +21,10 @@ from app_exception.exception import AppException
 from data_eng.stage0_loading import GetData
 
 
-MODEL_DIR = "models"
-MODEL_PATH = os.path.join(os.getcwd(), MODEL_DIR)
-CURRENT_TIME_STAMP = f"{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
-folder_name = CURRENT_TIME_STAMP
-MAIN_PATH = os.path.join(MODEL_PATH, folder_name)
-
 class TrainEvaluate:
     def __init__(self, config):
         self.get_data = GetData()
-        self.filename = config.data_model.file_model #"model_rf.pkl"
+        self.filename = config.model_data.file_model
 
     def evaluation_metrics(self, act, pred):
         self.r2_score = r2_score(act, pred)
@@ -41,10 +35,18 @@ class TrainEvaluate:
     def model_eval(self, config):
         try:
             logging.info("'train_evaluate' function started")
-            #self.config = self.get_data.read_params(config_path)
             self.test_data = config.model_data.train_data_dir + "/" + config.model_data.train_filename #"data/processed/test.csv"
             self.train_data = config.model_data.test_data_dir + "/" + config.model_data.test_filename #"data/processed/train.csv"
-            self.model_dir = config.model_data.models_dir #MODEL_DIR
+
+            # Recupera directorio para almacenar el modelo entrenado
+            self.model_dir = config.model_data.models_dir
+            MODEL_PATH = os.path.join(os.getcwd(), self.model_dir)
+
+            # Recupera directorio para almacenar los reportes
+            self.report_dir = config.model_data.reports_dir
+            REPORT_PATH = os.path.join(os.getcwd(), self.report_dir)
+
+            # Recupera la variable etiqueta para entrenar el modelo
             self.target_col = config.model_data.target_data
             
             logging.info("train data read successfully-->path: "+self.train_data)
@@ -55,12 +57,12 @@ class TrainEvaluate:
             
             
             logging.info("model training started")
-            self.criterion = config.estimators.RandomForestRegressor.params.criterion #"mae"
-            self.max_depth = config.estimators.RandomForestRegressor.params.max_depth #"10
-            self.min_sample_leaf = config.estimators.RandomForestRegressor.params.min_sample_leaf #2
-            self.n_estimators = config.estimators.RandomForestRegressor.params.n_estimators #80
-            self.min_sample_split = config.estimators.RandomForestRegressor.params.min_sample_split #8
-            self.oob_score = config.estimators.RandomForestRegressor.params.oob_score #True
+            self.criterion = config.estimators.RandomForestRegressor.params.criterion
+            self.max_depth = config.estimators.RandomForestRegressor.params.max_depth
+            self.min_sample_leaf = config.estimators.RandomForestRegressor.params.min_sample_leaf
+            self.n_estimators = config.estimators.RandomForestRegressor.params.n_estimators
+            self.min_sample_split = config.estimators.RandomForestRegressor.params.min_sample_split
+            self.oob_score = config.estimators.RandomForestRegressor.params.oob_score
             
             self.x_train, self.x_test = self.train.drop(
                 self.target_col, axis=1), self.test.drop(self.target_col, axis=1)
@@ -78,39 +80,33 @@ class TrainEvaluate:
             }
 
 
-            #distributions = config.RandomizedSearchCV.params if isinstance(config.RandomizedSearchCV.params, tuple) else config.RandomizedSearchCV.params
-
-            #print (distributions)
-
             RCV = RandomizedSearchCV(
                 estimator=rf,
                 param_distributions= distributions,
-                n_iter= config.RandomizedSearchCV.n_iter, #3,
-                scoring= config.RandomizedSearchCV.scoring, #"r2",
-                cv= config.RandomizedSearchCV.cv, #5,
-                verbose= config.RandomizedSearchCV.verbose, #5,
-                random_state= config.RandomizedSearchCV.random_state, #42,
-                n_jobs= config.RandomizedSearchCV.n_jobs,  #-1,
-                return_train_score= config.RandomizedSearchCV.return_train_score # True
+                n_iter= config.RandomizedSearchCV.n_iter, 
+                scoring= config.RandomizedSearchCV.scoring, 
+                cv= config.RandomizedSearchCV.cv,
+                verbose= config.RandomizedSearchCV.verbose,
+                random_state= config.RandomizedSearchCV.random_state,
+                n_jobs= config.RandomizedSearchCV.n_jobs,
+                return_train_score= config.RandomizedSearchCV.return_train_score 
             )
             rf1 = RCV.fit(self.x_train, self.y_train)
-            
-            logging.info(RCV.best_score_)
-            
             
             y_pred = rf1.predict(self.x_test)
             logging.info("Model Trained on RandomizedSearchCV successfully")
             
             (r2, mse, rmse) = self.evaluation_metrics(self.y_test, y_pred)
-            #logging.info(r2*100, mse, rmse)
 
-            os.makedirs(self.model_dir, exist_ok=True)
-            os.makedirs(MAIN_PATH,exist_ok=True)
-            self.model_path = os.path.join(MAIN_PATH,self.filename)
+            #Verifica que el directorio 'models' exista
+            os.makedirs(MODEL_PATH,exist_ok=True)
+            self.model_path = os.path.join(MODEL_PATH,self.filename)
             joblib.dump(rf1, self.model_path)
 
-            scores_file = config.reports.scores #"reports/scores.json"
-            params_file = config.reports.params #"reports/params.json"
+            #Verifica que el directorio 'reports' exista
+            os.makedirs(REPORT_PATH,exist_ok=True)
+            scores_file = config.reports.scores 
+            params_file = config.reports.params
 
             with open(scores_file, "w") as f:
                 scores = {
@@ -142,14 +138,10 @@ class TrainEvaluate:
             raise AppException(e, sys) from e
 
 
-@hydra.main(config_path=f"{os.getcwd()}/configs", config_name="model1", version_base=None)
+@hydra.main(config_path=f"{os.getcwd()}/configs", config_name="model_eng", version_base=None)
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
     TrainEvaluate(cfg).model_eval(cfg)
 
 if __name__ == "__main__":
     main()
-
-
-#if __name__ == "__main__":
-#    TrainEvaluate().model_eval()
