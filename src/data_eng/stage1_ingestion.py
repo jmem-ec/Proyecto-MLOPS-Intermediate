@@ -19,15 +19,12 @@ class LoadData:
     def __init__(self):
         self.getdata = GetData()
 
-    def load_data(self, config): # input_path, output_path):
+    def load_data(self, config): 
             
         try:
             logging.info(f"Loading data from the source")
             
             self.data = self.getdata.get_data(config)
-
-            #print(config.data_source.external_data_dir + "/" + config.data_source.filename)
-
             self.raw_data_path = config.raw_data.raw_data_dir + "/" + config.raw_data.raw_filename
             self.data.to_csv(self.raw_data_path, sep=',', encoding='utf-8', index=False)
             logging.info(f"Data Loaded from the source successfully !!!")
@@ -42,22 +39,6 @@ class LoadData:
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
     LoadData().load_data(cfg)
-    ##data = GetData().get_data(cfg)
-    #data_loader = GetData(cfg)
-    #data = data_loader.get_data()
 
 if __name__ == "__main__":
     main()
-
-
-
-#if __name__ == '__main__':
-#    args = argparse.ArgumentParser()
-#    args.add_argument('--input_path', default='data/external/Consignment_pricing.csv', help='Ruta del archivo CSV de entrada usado para entrenar el modelo de predicción')
-#    args.add_argument('--output_path', default='data/raw/dataset.csv', help='Ruta de salida para guardar los datos')
-
-#    parsed_args = args.parse_args()
-    
-#    LoadData().load_data(input_path=parsed_args.input_path, output_path=parsed_args.output_path)
-
-

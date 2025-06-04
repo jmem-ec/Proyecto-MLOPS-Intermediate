@@ -44,17 +44,7 @@ class SplitData:
 @hydra.main(config_path=f"{os.getcwd()}/configs", config_name="data_eng", version_base=None)
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
-    SplitData().split_data(cfg) # input_path=args.input_path, output_path=args.output_path)
+    SplitData().split_data(cfg) 
 
 if __name__ == "__main__":
     main()
-
-
-#if __name__ == "__main__":
-
-#    parser = argparse.ArgumentParser()
-#    parser.add_argument('--input_path', default='data/processed/dataprocesed.csv')
-#    args = parser.parse_args()
-
-#    SplitData().split_data(input_path=args.input_path)
-

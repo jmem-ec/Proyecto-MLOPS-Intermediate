@@ -172,10 +172,9 @@ class Preprocessing:
             raise AppException(e, sys) from e
         
 
-    def data_(self, config): #input_path, output_path):
+    def data_(self, config): 
         try:
             logging.info("'data' FUNCTION STARTED")
-            #self.config = self.get_data.read_params(input_path)
             self.data = self.drop_unnecessary_columns(config)
             
             self.data["po_/_so_#"] = self.data["po_/_so_#"].apply(self.reorder)
@@ -193,18 +192,7 @@ class Preprocessing:
 @hydra.main(config_path=f"{os.getcwd()}/configs", config_name="data_eng", version_base=None)
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
-    Preprocessing().data_(cfg) #input_path=args.input_path, output_path=args.output_path)
+    Preprocessing().data_(cfg) 
 
 if __name__ == "__main__":
     main()
-
-
-
-#if __name__ == "__main__":
-#    parser = argparse.ArgumentParser()
-    #parser.add_argument('--input_path', default='data/raw/Consignment_pricing_raw.csv')
-#    parser.add_argument('--input_path', default='data/raw/dataset.csv')
-#    parser.add_argument('--output_path', default='data/interim/datacleaned.csv')
-#    args = parser.parse_args()
-
-#    Preprocessing().data_(input_path=args.input_path, output_path=args.output_path)

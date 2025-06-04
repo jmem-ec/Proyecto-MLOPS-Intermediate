@@ -62,14 +62,6 @@ class GetData:
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
     data = GetData().get_data(cfg)
-    #data_loader = GetData(cfg)
-    #data = data_loader.get_data()
 
 if __name__ == "__main__":
     main()
-
-    #args = argparse.ArgumentParser()
-    #args.add_argument('--input_path', default="https://raw.githubusercontent.com/jmem-ec/KRRCourse/ccbd6ccf8389ba0988d53fc9300a64da00e6368b/Consignment_pricing.csv")
-    
-    #parsed_args = args.parse_args()
-    #data = GetData().get_data(config_path=parsed_args.input_path)

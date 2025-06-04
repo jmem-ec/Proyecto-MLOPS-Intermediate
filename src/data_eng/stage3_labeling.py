@@ -132,7 +132,7 @@ class FeatureEngineering:
             logging.info(
                  "feature engineering function compiled successfully")
             return self.data
-            # [data for data in self.data if self.data[data].dtypes=="O"]
+
         except Exception as e:
             logging.info(
                  "Exception occurred while compiling the code" + str(e))
@@ -159,16 +159,7 @@ class FeatureEngineering:
 @hydra.main(config_path=f"{os.getcwd()}/configs", config_name="data_eng", version_base=None)
 def main(cfg: DictConfig):
     logging.basicConfig(level=logging.INFO)
-    data = FeatureEngineering().final_data(cfg) # input_path=args.input_path, output_path=args.output_path)
+    data = FeatureEngineering().final_data(cfg) 
 
 if __name__ == "__main__":
     main()
-
-
-#if __name__ == "__main__":
-#    parser = argparse.ArgumentParser()
-#    parser.add_argument('--input_path', default='data/interim/datacleaned.csv')
-#    parser.add_argument('--output_path', default='data/processed/dataprocesed.csv')
-#    args = parser.parse_args()
-
-#    data = FeatureEngineering().final_data(input_path=args.input_path, output_path=args.output_path)
