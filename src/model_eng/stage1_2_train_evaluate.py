@@ -9,6 +9,9 @@ import os
 import hydra
 from omegaconf import DictConfig
 
+import mlflow
+import mlflow.sklearn
+from mlflow.models import infer_signature
 from datetime import datetime
 
 from sklearn.model_selection import RandomizedSearchCV
@@ -63,14 +66,17 @@ class TrainEvaluate:
             self.n_estimators = config.estimators.RandomForestRegressor.params.n_estimators
             self.min_sample_split = config.estimators.RandomForestRegressor.params.min_sample_split
             self.oob_score = config.estimators.RandomForestRegressor.params.oob_score
-            
+
+            # Cargar los datos
             self.x_train, self.x_test = self.train.drop(
                 self.target_col, axis=1), self.test.drop(self.target_col, axis=1)
             self.y_train, self.y_test = self.train[self.target_col], self.test[self.target_col]
           
+            # Definir modelo base
             rf = RandomForestRegressor()
             rf.fit(self.x_train, self.y_train)
-            
+
+            #Espacio de búsqueda
             distributions = { 
                 "n_estimators": [5,10,20,40,80],
                 "criterion": ["absolute_error", 'friedman_mse', 'poisson', 'squared_error'],
@@ -79,7 +85,7 @@ class TrainEvaluate:
                 "min_samples_leaf": [2,4,8,10]
             }
 
-
+            # Ejecuta RandomizedSearchCV para encontrar los mejores hiperparametros            
             RCV = RandomizedSearchCV(
                 estimator=rf,
                 param_distributions= distributions,
@@ -91,45 +97,79 @@ class TrainEvaluate:
                 n_jobs= config.RandomizedSearchCV.n_jobs,
                 return_train_score= config.RandomizedSearchCV.return_train_score 
             )
-            rf1 = RCV.fit(self.x_train, self.y_train)
-            
-            y_pred = rf1.predict(self.x_test)
-            logging.info("Model Trained on RandomizedSearchCV successfully")
-            
-            (r2, mse, rmse) = self.evaluation_metrics(self.y_test, y_pred)
 
-            #Verifica que el directorio 'models' exista
-            os.makedirs(MODEL_PATH,exist_ok=True)
-            self.model_path = os.path.join(MODEL_PATH,self.filename)
-            joblib.dump(rf1, self.model_path)
+            # Set tracking server uri for logging
+            # No descomentes esta línea si vas a usar MLFlow de forma local
+            # mlflow.set_tracking_uri(config.mlflow.tracking_uri)
 
-            #Verifica que el directorio 'reports' exista
-            os.makedirs(REPORT_PATH,exist_ok=True)
-            scores_file = config.reports.scores 
-            params_file = config.reports.params
+            # Nombre del experimento
+            exp_name = "exp_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+            mlflow.set_experiment(exp_name)
 
-            with open(scores_file, "w") as f:
-                scores = {
-                    "rmse": rmse,
-                    "r2 score": r2*100,
-                    "mse": mse,
-                    "train_score": rf.score(self.x_train, self.y_train),
-                    "test_score": rf.score(self.x_test, self.y_test)
-                }
-                json.dump(scores, f, indent=4)
-            logging.info("scores written to file")
-            
-            with open(params_file, "w") as f:
-                params = {
-                    "best params": RCV.best_params_,
-                    "criterion": self.criterion,
-                    "n_estimators": self.n_estimators,
-                    "max_depth": self.max_depth,
-                    "min_sample_leaf": self.min_sample_leaf,
-                    "min_sample_split": self.min_sample_split,
-                    "oob_score": self.oob_score
-                }
-                json.dump(params, f, indent=4)
+            # Iniciar MLFlow
+            with mlflow.start_run():
+
+                # Ejecutar busqueda de los hiperparametros
+                rf1 = RCV.fit(self.x_train, self.y_train)
+                
+                #Evaluar
+                y_pred = rf1.predict(self.x_test)
+                logging.info("Model Trained on RandomizedSearchCV successfully")
+                (r2, mse, rmse) = self.evaluation_metrics(self.y_test, y_pred)
+
+                #Infer model signature (agregado)
+                self.x_train = self.x_train.astype("float64")
+                predictions = rf1.predict(self.x_train)
+                signature = infer_signature(self.x_train, predictions)
+
+                # Registrar hiperparametros optimos
+                mlflow.log_params(RCV.best_params_)
+
+                # Registrar métricas
+                mlflow.log_metric("mse", mse)
+                mlflow.log_metric("r2_score", r2)
+                mlflow.log_metric("rmse", rmse)
+                mlflow.log_metric("train_score", rf.score(self.x_train, self.y_train))
+                mlflow.log_metric("test_score", rf.score(self.x_test, self.y_test))
+
+                #Verifica que el directorio 'models' exista
+                os.makedirs(MODEL_PATH,exist_ok=True)
+                self.model_path = os.path.join(MODEL_PATH,self.filename)
+                joblib.dump(rf1, self.model_path)
+
+                # Registrar modelo MLFlow
+                # Con el objetivo de no saturar los recursos limitados de su máquina local, 
+                # puede omitir el guardado del modelo en local o en el servidor MLflow 
+                # dejando la siguiente línea comentada
+                #mlflow.sklearn.log_model(rf1, config.mlflow.mlruns_path, signature=signature) 
+
+                #Verifica que el directorio 'reports' exista
+                os.makedirs(REPORT_PATH,exist_ok=True)
+                scores_file = config.reports.scores 
+                params_file = config.reports.params
+
+                with open(scores_file, "w") as f:
+                    scores = {
+                        "rmse": rmse,
+                        "r2 score": r2*100,
+                        "mse": mse,
+                        "train_score": rf.score(self.x_train, self.y_train),
+                        "test_score": rf.score(self.x_test, self.y_test)
+                    }
+                    json.dump(scores, f, indent=4)
+                logging.info("scores written to file")
+                
+                with open(params_file, "w") as f:
+                    params = {
+                        "best params": RCV.best_params_,
+                        "criterion": self.criterion,
+                        "n_estimators": self.n_estimators,
+                        "max_depth": self.max_depth,
+                        "min_sample_leaf": self.min_sample_leaf,
+                        "min_sample_split": self.min_sample_split,
+                        "oob_score": self.oob_score
+                    }
+                    json.dump(params, f, indent=4)
                 
             
         except Exception as e:
